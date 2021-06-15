@@ -1,6 +1,5 @@
 # Hex with Pygame
 ## Whats is Hex ?
------
 ### Historical point of view
 -----
 Hex as been created in 1942 by a Danish mathematician named _Piet Hein_. The first commercialization of this game is in 1952. With time, some strategies to win have been seeking. Thus, techniques have been found to consistently win on a 7x7 and 9x9 Board. More recently, in 2019, Facebook succeeds in beating the best player of Hex on a 19x19 board.
@@ -60,7 +59,6 @@ And that's it ! You blocked them.
 <img src="Icon/Image10.png"/>
 
 ## The program
----
 ### The algorithm for the Win
 ---
 How can the algorithm detect if a player has won ?
@@ -96,14 +94,11 @@ The Lenght of the board can go from 5x5 to 50x50
 # How to install Python and Pygame ?
 
 ## Install Python 
-----
 If Python is not installed on your computer (to verify that, you can do: "```python --version```" on a Terminal. If you don't know how to access a Terminal you can click here :<a href="https://www.ionos.com/help/email/troubleshooting-mail-basicmail-business/access-the-command-prompt-or-terminal/"> How to access a Terminal</a>) you can click on this link <a href="https://www.python.org/downloads/">Installing Python</a>, than click on "Download Python 3.X.X". After that, you can execute this File. A window should appear. At the bottom of the screen, there is a small box where it's written: "Add Python3.X to path". Check this box. After that, click on "Customize Installation". Check all the boxes if they aren't checked and click on "Next". Then, click on "Install". After that, you can close the window
 
 ## Install Pygame
----
 If you want to check if Python is installed you can open a Terminal and write ```python --version```. Installing Pygame is not difficult. Now you need to open a Terminal if there is none open. And just type ```py -m pip install pygame```. It will take some time for being installed.
 
 ## Install Hex Game
----
 To install Hex Game you need to download this project as a .zip, then you have to decompress it. After the installation and the decompression, you have to execute it by doing ```py main.py``` </br>
 **⚠️** Make sure that you are in the good Folder when you do that. For example, if the file is on your Desktop you should do ```cd Desktop```. You don't understand what I just said? Path of a file in <a href="https://www.sony.com/electronics/support/articles/00015251">Windows</a> / <a href="https://www.switchingtomac.com/tutorials/osx/5-ways-to-reveal-the-path-of-a-file-on-macos/">Mac</a>. How to use CD: <a href="https://www.techwalla.com/articles/how-to-use-quotcdquot-command-in-command-prompt-window"> Here </a>(It's the same with Mac) **⚠️**
