@@ -1,4 +1,11 @@
 # Hex with Pygame
+
+- [Historical point of view](#historical-point-of-view)
+- [What Are the rules of this game ?](#what-are-the-rules-of-this-game--)
+- [Some Strategies and tips](#some-strategies-and-tips)
+- [The algorithm for the Win](#the-algorithm-for-the-win)
+- [Other fonctionnalities](#other-fonctionnalities)
+
 ## Whats is Hex ?
 ### Historical point of view
 -----
