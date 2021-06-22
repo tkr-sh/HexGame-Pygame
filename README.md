@@ -90,7 +90,7 @@ This  algorithm can be similar to <a href="https://en.wikipedia.org/wiki/Mathema
 #### **Color**
 You can customize the main color of this game. Just by pressing a button
 #### **Languages**
-There is many languages that are available. (French 🇫🇷 , English 🇺🇸 , Japan 🇯🇵 , Korean 🇰🇷 , Greek 🇬🇷  and Sweden 🇸🇪 )
+Many languages are available. (French 🇫🇷 , English 🇺🇸 , Japan 🇯🇵 , Korean 🇰🇷 , Greek 🇬🇷  and Sweden 🇸🇪 )
 #### **Sound/Music**
 There is an default music made by the author. The volume of the music can be modified from 0.0% to 100.0%
 #### **Lenght of the Board**
