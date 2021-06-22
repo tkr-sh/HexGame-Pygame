@@ -15,13 +15,18 @@ pygame.display.set_icon(logo)
 
 music = pygame.mixer.Sound("Music/Music.ogg")
 music.play(256)
+sound = pygame.mixer.Sound("Music/button_hover.mp3")
 
 mainClock = pygame.time.Clock()
 
 
-global_font = "Roboto"
-LANG = "en"
-
+#-----Restoration of data
+cookie = open("info.txt",'r')
+all_txt = cookie.readlines()
+for i in range(len(all_txt)):
+    all_txt[i] = all_txt[i].replace("\n","")
+r, g, b, LANG, global_font, volume = all_txt
+music.set_volume(int(volume)/100)
 #-----Dimensions
 #---------------Screen Size
 SIZE_X = 1080
@@ -34,102 +39,674 @@ TOP_BOX = BOTTOM_BOX - BOX_Y
 LEFT_BOX = (SIZE_X-BOX_X)/2
 RIGHT_BOX = (SIZE_X-BOX_X)/2 + BOX_X
 MIDY_BOX = (TOP_BOX + BOTTOM_BOX)/2
+#-----------Colors
 
-#-----Couleurs
-screen_color = ( 255 , 224 , 0)
-dark_screen_color = (225, 200, 0)
-light_effet = (252, 244, 164)
+var_red = var_green = var_blue = False
+
+if int(r) > 235 and int(g) > 235 and int(b) > 235:
+    screen_color = (235,235,235)
+elif int(r) < 50 and int(g) < 50 and int(b) < 50:
+    screen_color = (50, 50, 50)
+else:
+    screen_color = ( int(r) , int(g) , int(b)) #255 , 224 , 0
+print(screen_color)
+
+dark_screen_color = (int(round(float(r)/1.13,0)) , int(round(float(g)/1.13,0)) , int(round(float(b)/1.13,0))) #225, 200, 0
+
+def light_color(x):
+    y = int(165.0 + float(90/255)*float(x))
+    y = min(y, 255)
+    return y
+
+light_effet = (light_color(r), light_color(g), light_color(b)) #252, 244, 164
+darker_color = ( max( int(r) - 50 , 0),max( int(g) - 50 , 0),max( int(b) - 50 , 0))
 white = (255 , 255 , 255)
 black = (0 , 0 , 0)
 beige = (230, 215, 188)
 gray = (200, 200, 200)
 d_gray = (32, 32, 32)
+l_gray = (230, 230, 230)
 
-#------Screen Initialisation
-screen = pygame.display.set_mode((SIZE_X, SIZE_Y))#, pygame.RESIZABLE 
+
+# ----- Screen
+screen = pygame.display.set_mode((SIZE_X, SIZE_Y), pygame.RESIZABLE )#, pygame.RESIZABLE
 screen.fill(screen_color)
-
-WIDTH_BUTTON = 500
-HEIGHT_BUTTON = 100
-MARGIN_TOP = 150 # MARGIN_TOP > HEIGHT_BUTTON
-#--------Button
-
-play_button = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2, (SIZE_Y - HEIGHT_BUTTON)/2 - MARGIN_TOP, WIDTH_BUTTON , HEIGHT_BUTTON)
-option_button = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2,(SIZE_Y - HEIGHT_BUTTON)/2, WIDTH_BUTTON , HEIGHT_BUTTON)
-quit_button = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2, (SIZE_Y - HEIGHT_BUTTON)/2 + MARGIN_TOP, WIDTH_BUTTON , HEIGHT_BUTTON)
-
-# BUTTON/2
-play_button_2 = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2, (SIZE_Y - HEIGHT_BUTTON)/2 - MARGIN_TOP, WIDTH_BUTTON , HEIGHT_BUTTON/2)
-option_button_2 = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2,(SIZE_Y - HEIGHT_BUTTON)/2, WIDTH_BUTTON , HEIGHT_BUTTON/2)
-quit_button_2 = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2, (SIZE_Y - HEIGHT_BUTTON)/2 + MARGIN_TOP, WIDTH_BUTTON , HEIGHT_BUTTON/2)
-#BUTTON/4
-play_button_4 = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2 + 50, (SIZE_Y - HEIGHT_BUTTON)/2 - MARGIN_TOP, WIDTH_BUTTON-100 , HEIGHT_BUTTON/4)
-option_button_4 = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2 +50,(SIZE_Y - HEIGHT_BUTTON)/2, WIDTH_BUTTON -100 , HEIGHT_BUTTON/4)
-quit_button_4 = pygame.Rect((SIZE_X - WIDTH_BUTTON)/2 + 50, (SIZE_Y - HEIGHT_BUTTON)/2 + MARGIN_TOP, WIDTH_BUTTON-100 , HEIGHT_BUTTON/4)
+pygame.display.flip()
 
 
-def main():
-    """ The Main Menu """
+#---Button 
+def switch_font(size, bold, italic):
+    # --- Roboto
+    if LANG in ['fr', 'en', 'gr', 'sw']:
+        font =  pygame.font.SysFont(global_font,size, bold, italic)
 
+    # --- Japanese
+    elif LANG == 'jp':
+        font = pygame.font.Font("Fonts/MPLUSRounded1c-Medium.ttf", size-10)
+
+    # --- Korean
+    elif LANG == 'kr':
+        font = pygame.font.Font("Fonts/DoHyeon-Regular.ttf", size)
+    a_file = open("info.txt", "r")
+    list_of_lines = a_file.readlines()
+    list_of_lines[4] = str(font)+"\n"
+
+    with open("info.txt", "w") as a_file:
+        a_file.writelines(list_of_lines)
+
+    return font
+
+def text(txt,x,y,z,color,bold, italic):
+    font = switch_font(z, bold, italic)
+    text2 = font.render(langues[txt].get(LANG), True, color)
+    screen.blit(text2, (x,y))
+
+def main_button(txt,x,y,color):
+    font = switch_font(75,False,False)
+    play_text = font.render("> "+langues[txt].get(LANG), True, color)
+    rect = pygame.Rect(x, y , SIZE_X/2.5, 80)
+    f_rect = pygame.draw.rect(screen, screen_color, rect )
+    screen.blit(play_text, (x, y))
+    return  f_rect
+
+def exit_sys(event):
+    if event.type == pygame.QUIT:
+        sys.exit()
+'''
+def animation(button, text,y ):
+
+    mouse_x , mouse_y = pygame.mouse.get_pos()
+    if not button.collidepoint((mouse_x, mouse_y)):
+        button = main_button(text,SIZE_X/15,y,black)
+        var = True 
+    try:
+        if button.collidepoint((mouse_x, mouse_y)) and var:
+            for _ in range(50):
+                button = main_button(text,SIZE_X/15+_,y,(int(5.1 * _),int(5.1 * _),int(5.1 * _)))
+                pygame.display.flip()
+            var = False
+    except UnboundLocalError:
+        if button.collidepoint((mouse_x, mouse_y)):
+            for _ in range(50):
+                button = main_button(text,SIZE_X/15+_,y,(int(5.1 * _),int(5.1 * _),int(5.1 * _)))
+                pygame.display.flip()
+            var = False
+'''
+def menu():
     screen.fill(screen_color)
-    title_font = switch_font(75, False, False)
-    title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
-    title_rect =title.get_rect(center=(SIZE_X/2, 50))
-    screen.blit(title,title_rect)
     running = True
-    click = False
-    K = 0
-    # DARK SCREEN COLOR
-    pygame.draw.rect(screen, dark_screen_color, play_button, border_radius= 15)
-    pygame.draw.rect(screen, dark_screen_color, option_button, border_radius= 15)
-    pygame.draw.rect(screen, dark_screen_color, quit_button, border_radius= 15)
-    #SCREEN COLOR
-    pygame.draw.rect(screen, screen_color, play_button_2, border_radius= 15)
-    pygame.draw.rect(screen, screen_color, option_button_2, border_radius= 15)
-    pygame.draw.rect(screen, screen_color, quit_button_2, border_radius= 15)
-    #LIGHT EFFECT
-    pygame.draw.rect(screen, light_effet, play_button_4, border_radius= 15)
-    pygame.draw.rect(screen, light_effet, option_button_4, border_radius= 15)
-    pygame.draw.rect(screen, light_effet, quit_button_4, border_radius= 15)
-    # Black BORDER
-    pygame.draw.rect(screen, black, play_button, 5 ,border_radius= 15)
-    pygame.draw.rect(screen, black, option_button, 5, border_radius= 15)
-    pygame.draw.rect(screen, black, quit_button, 5, border_radius= 15)
-
-    font = switch_font(50, False, False)
-    play_text = font.render(langues["play"].get(LANG), True, (0 , 0 ,0))
-    option_text =font.render(langues["option"].get(LANG), True, (0 , 0 ,0))
-    quit_text = font.render(langues["quit"].get(LANG), True, (0 , 0 ,0))
-
-    play_rect = play_text.get_rect(center=(SIZE_X/2, SIZE_Y/2 - MARGIN_TOP))
-    option_rect = option_text.get_rect(center=(SIZE_X/2, SIZE_Y/2))
-    quit_rect = quit_text.get_rect(center=(SIZE_X/2, SIZE_Y/2 + MARGIN_TOP))
-
-    screen.blit(play_text, play_rect)
-    screen.blit(option_text, option_rect)
-    screen.blit(quit_text, quit_rect)
-
+    click = True
+    var_time = 0
+    previousClock = 0
+    time_loop = 0
+    play_button = main_button("play",SIZE_X/15,2*SIZE_Y/5 ,black)
+    option_button = main_button("option",SIZE_X/15,3*SIZE_Y/5 - 30,black)
+    quit_button = main_button("quit",SIZE_X/15,4*SIZE_Y/5 - 60,black)
+    if LANG == 'jp':
+        text("hex_game",SIZE_X/20,SIZE_Y/5 - 30, 100, black, False, False)
+    else:
+        text("hex_game",SIZE_X/20,SIZE_Y/5 - 30, 150, black, False, False)
+    text("v",SIZE_X- 75,SIZE_Y - 30, 25, black, False, False)
+    rect = pygame.Rect(SIZE_X/15, 2*SIZE_Y/5 , 30, SIZE_Y/2)
+    pygame.draw.rect(screen, screen_color, rect )
     while running:
+
+        #-----Play Button
         mouse_x , mouse_y = pygame.mouse.get_pos()
 
-        if K == 8:
-            pygame.draw.rect(screen, dark_screen_color, play_button, border_radius= 15)
-            pygame.draw.rect(screen, screen_color, play_button_2, border_radius= 15)
-            pygame.draw.rect(screen, light_effet, play_button_4, border_radius= 15)
-            pygame.draw.rect(screen, black, play_button, 5 ,border_radius= 15)
-            play_text = font.render(langues["p1ay"].get(LANG), True, (0 , 0 ,0))
-            play_rect = play_text.get_rect(center=(SIZE_X/2, SIZE_Y/2 - MARGIN_TOP))
-            screen.blit(play_text, play_rect)
-            K=9
-
-        #------Direction of a Button
+        if not play_button.collidepoint((mouse_x, mouse_y)):
+            play_button = main_button("play",SIZE_X/15,2*SIZE_Y/5,black)
+            var = True 
+        if play_button.collidepoint((mouse_x, mouse_y)) and var:
+            for _ in range(20):
+                play_button = main_button("play",SIZE_X/15+_*2,2*SIZE_Y/5,(int(12.75 * _),int(12.75 * _),int(12.75 * _)))
+                pygame.draw.rect(screen, screen_color, rect )
+                pygame.display.flip()
+            sound.play()
+            var = False
         if play_button.collidepoint((mouse_x, mouse_y)) and click:
-            choosing_lenght()
+            game_menu()
+
+        #-------Option Button
+        if not option_button.collidepoint((mouse_x, mouse_y)):
+            option_button = main_button("option",SIZE_X/15,3*SIZE_Y/5 - 30,black)
+            var_opt = True 
+        if option_button.collidepoint((mouse_x, mouse_y)) and var_opt:
+            for _ in range(20):
+                option_button = main_button("option",SIZE_X/15+_*2,3*SIZE_Y/5 -30,(int(12.75 * _),int(12.75 * _),int(12.75 * _)))
+                pygame.draw.rect(screen, screen_color, rect )
+                pygame.display.flip()
+            sound.play()
+
+            var_opt = False
         if option_button.collidepoint((mouse_x, mouse_y)) and click:
-            option()
+            langue(0)
+
+        #-------Quit Button
+        if not quit_button.collidepoint((mouse_x, mouse_y)):
+            quit_button = main_button("quit",SIZE_X/15,4*SIZE_Y/5 - 60,black)
+            var_qt = True 
+        if quit_button.collidepoint((mouse_x, mouse_y)) and var_qt:
+            for _ in range(20):
+                quit_button = main_button("quit",SIZE_X/15+_*2,4*SIZE_Y/5 - 60,(int(12.75 * _),int(12.75 * _),int(12.75 * _)))
+                pygame.draw.rect(screen, screen_color, rect )
+                pygame.display.flip()
+            sound.play()
+            var_qt = False
         if quit_button.collidepoint((mouse_x, mouse_y)) and click:
-            running = False
             sys.exit()
+        var_time += pygame.time.get_ticks() - previousClock
+        previousClock = pygame.time.get_ticks()
+        #print(pygame.time.get_ticks())
+        if var_time > 15000:
+            var_time = 0
+            time_loop += 1
+            if time_loop == 4:
+                time_loop = 0
+            def load_image(x,img_name,img_txt, img_txt2):
+                if time_loop == x:
+                    #For text bg
+                    bg_rect = pygame.Rect(SIZE_X/2, 4*SIZE_Y/5 , SIZE_X/2, 90)
+                    pygame.draw.rect(screen, screen_color, bg_rect )
+                    # For Image bf
+                    SIZE_IMG = 400
+                    bg_rect_img = pygame.Rect(4*SIZE_X/5 - 200,4*SIZE_Y/5 - 400,SIZE_IMG,SIZE_IMG)
+                    #Image
+                    pygame.draw.rect(screen, screen_color, bg_rect_img )
+                    image = pygame.image.load("Icon/"+img_name+".png")
+                    image = pygame.transform.scale(image, (SIZE_IMG, SIZE_IMG))
+                    screen.blit(image, [4*SIZE_X/5 - 200,4*SIZE_Y/5 - 400])
+                    #Text to describe image
+                    font = switch_font(30, False, False)
+                    text_img = font.render(langues[img_txt].get(LANG), True, black)
+                    text_rect = text_img.get_rect(center=(4*SIZE_X/5,4*SIZE_Y/5 + 30))
+                    text_img2 = font.render(langues[img_txt2].get(LANG), True, black)
+                    text_rect2 = text_img2.get_rect(center=(4*SIZE_X/5,4*SIZE_Y/5 + 60))
+                    screen.blit(text_img, text_rect)
+                    screen.blit(text_img2, text_rect2)
+            load_image(0,"github","github","github2")
+            load_image(1,"paint","custom_color","custom_color2")
+            load_image(2,"logo_menu","mode","mode2")
+            load_image(3,"flags","flags"," ")
+
+        click = False
+        for event in pygame.event.get():
+            exit_sys(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                click = True
+        pygame.draw.rect(screen, screen_color, rect )
+        pygame.display.flip()
+
+
+def play(x, img, ico, txt,des,des2):
+
+    #---Rect
+    play_rect = pygame.Rect(x,SIZE_Y/3,SIZE_X/5,SIZE_Y/2)
+    header_rect = pygame.Rect(x,SIZE_Y/3,SIZE_X/5,SIZE_Y/15)
+    text_rect = pygame.Rect(x,SIZE_Y/3 + 0.3 *SIZE_Y,SIZE_X/5,3*SIZE_Y/15)
+    pygame.draw.rect(screen, d_gray, header_rect)
+    pygame.draw.rect(screen, gray, text_rect)
+    
+    #---Image
+    image = pygame.image.load("Icon/"+img+".png")
+    image = pygame.transform.scale(image, (int(SIZE_X/5), int(SIZE_X/5)))
+    screen.blit(image, [x,SIZE_Y/3 + SIZE_Y/15])
+
+    #---icon
+    icon = pygame.image.load("Icon/"+ico+".png")
+    icon = pygame.transform.scale(icon, (30, 30))
+    rect_icon = icon.get_rect(center=(x + SIZE_X/10,SIZE_Y/3 + 0.3 *SIZE_Y+60))
+    screen.blit(icon, rect_icon)
+
+    #---Title
+    font = switch_font(47, False, False)
+    title_header = font.render(langues[txt].get(LANG), True, white)
+    header_text = title_header.get_rect(center = ( x + SIZE_X/10 , SIZE_Y/3 + SIZE_Y/30))
+    screen.blit(title_header, header_text)
+
+    #---Description
+    if LANG == 'gr':
+        font_des = switch_font(15, False, False)
+    else:
+        font_des = switch_font(20, False, False)
+    des = font_des.render(langues[des].get(LANG), True, black)
+    des_text = des.get_rect(center = ( x + SIZE_X/10 , SIZE_Y/3 + SIZE_Y/2.4))
+    screen.blit(des, des_text)
+
+    des2 = font_des.render(langues[des2].get(LANG), True, black)
+    des_text2 = des2.get_rect(center = ( x + SIZE_X/10 , SIZE_Y/3 + SIZE_Y/2.25))
+    screen.blit(des2, des_text2)
+
+
+    return play_rect
+
+def play_hover(button,x,y,z, img, ico, txt,des,des2,click,function,para):
+    if not button.collidepoint((x,y)):
+        pygame.draw.rect(screen, screen_color, pygame.Rect(z - 5 ,SIZE_Y/3 - 5 ,SIZE_X/5 +10 ,SIZE_Y/2 + 10))
+    elif button.collidepoint((x,y)) and click:
+        if para =="":
+            function()
+        else: 
+            function(para)
+    elif button.collidepoint((x,y)):
+        pygame.draw.rect(screen, white, pygame.Rect(z - 5 ,SIZE_Y/3 - 5 ,SIZE_X/5 +10 ,SIZE_Y/2 + 10))
+    play(z,img,ico,txt,des,des2)
+
+
+bool_hover = False
+def back_button(mx,my, click):
+    global bool_hover
+    x=100
+    arrow = [ (x,75), 
+    (x+20,30),
+    (x+40,30),
+    (x+20,75),
+    (x+40,120),
+    (x+20,120)
+    ]
+    anti_arrow = [ (0,28),
+    (x+18,28),
+    (x-2,75),
+    (x+18,122),
+    (0,122)
+    ]
+    anti_anti_arrow = [ (x+42,30),
+    (x+22,75),
+    (x+42,120),
+    (300,120),
+    (300,30)
+    ]
+
+
+    s = pygame.Surface((40,90))  # the size of your rect
+    s.set_alpha(0)                # alpha level
+    s.fill((255,255,255))           # this fills the entire surface
+    screen.blit(s, (100,30))
+    if not screen.blit(s, (100,30)).collidepoint((mx,my)):
+        _extracted_from_back_button_30(arrow, anti_arrow)
+        pygame.draw.polygon(screen, dark_screen_color, anti_anti_arrow)
+        bool_hover = False
+    elif screen.blit(s, (100,30)).collidepoint((mx,my)) and not bool_hover:
+        for _ in range(15):
+            pygame.draw.polygon(screen, dark_screen_color, arrow)
+            pygame.draw.polygon(screen, dark_screen_color, arrow,4)
+            x -= 4
+            text_rectt = pygame.Rect(x+20,40,-3.5 * (x-100),70)
+            pygame.draw.rect(screen, light_effet, text_rectt)
+            if LANG in {'jp','kr'}:
+                back_font = switch_font(50, False, False)
+            else:
+                back_font = switch_font(75, False, False)
+            text_back = back_font.render(langues["back"].get(LANG), True, black)
+            screen.blit(text_back, (70, 53))
+            arrow = [ (x,75), (x+20,30),(x+40,30),(x+20,75),(x+40,120),(x+20,120)]
+            anti_arrow = [ (0,28),(x+18,28),(x-2,75),(x+18,122),(0,122)]
+            _extracted_from_back_button_30(arrow, anti_arrow)
+            pygame.display.flip()
+        bool_hover = True
+    elif screen.blit(s, (100,30)).collidepoint((mx,my)) and click:
+        menu()
+
+    return arrow
+
+def _extracted_from_back_button_30(arrow, anti_arrow):
+    pygame.draw.polygon(screen, white, arrow)
+    pygame.draw.polygon(screen, black, arrow,4)
+    pygame.draw.polygon(screen, dark_screen_color, anti_arrow)
+
+def game_menu():
+
+    screen.fill(screen_color)
+
+    #Header
+    Header = pygame.Rect(0,0,SIZE_X, 150)
+    pygame.draw.rect(screen, dark_screen_color, Header)
+    
+    #-----Title
+    font = switch_font(100, False, False)
+
+    title = font.render(langues["play"].get(LANG), True, white)
+    title_border = font.render(langues["play"].get(LANG), True, black )
+
+    rect_title = title.get_rect(center=(SIZE_X/2,75))
+    rect_title_bl = title.get_rect(center=(SIZE_X/2-2,73))
+    rect_title_br = title.get_rect(center=(SIZE_X/2+2,73))
+    rect_title_tl = title.get_rect(center=(SIZE_X/2-2,77))
+    rect_title_tr = title.get_rect(center=(SIZE_X/2+2,77))
+    screen.blit(title_border, rect_title_bl)
+    screen.blit(title_border, rect_title_br)
+    screen.blit(title_border, rect_title_tr)
+    screen.blit(title_border, rect_title_tl)
+    screen.blit(title, rect_title)
+    
+    local_button = play(SIZE_X/25,"local","house","local","des_local","des_local2")
+    online_button = play(SIZE_X/5 + (SIZE_X/25)*2,"online","WWW","online","des_online","des_online2")
+    ia_button = play(2*(SIZE_X/5)+ (SIZE_X/25)*3,"IA","ai","Computer","des_ia","des_ia2")
+    _button = play(3*(SIZE_X/5)+ (SIZE_X/25)*4,"?","?2","?"," ", " ")
+
+    #-------
+    
+    click = False
+    pygame.display.flip()
+    while 1:
+        mouse_x , mouse_y = pygame.mouse.get_pos()
+        back_button(mouse_x,mouse_y,click)
+        play_hover(local_button,mouse_x,mouse_y,SIZE_X/25, "local","house","local","des_local","des_local2",click,choosing_lenght,"")
+        play_hover(online_button,mouse_x,mouse_y,SIZE_X/5 + (SIZE_X/25)*2,"online","WWW","online","des_online","des_online2",click,menu,"")
+        play_hover(ia_button,mouse_x,mouse_y,2*(SIZE_X/5)+ (SIZE_X/25)*3,"IA","ai","Computer","des_ia","des_ia2",click,menu,"")
+        play_hover(_button,mouse_x,mouse_y,3*(SIZE_X/5)+ (SIZE_X/25)*4,"?","?2","?"," ", " ",click,menu,"")
+
+
+
+
+        click = False
+        for event in pygame.event.get():
+            exit_sys(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                click = True
+        pygame.display.flip()
+
+
+def flag_icon(flag,color,nb,txt,x,y,click,page):
+    global LANG
+    flag = pygame.image.load(f"Flags/{flag}.png")
+    flag.convert()
+    #---Rescale
+    HEIGHT_FLAG = 33
+    WIDTH_FLAG = 50
+    flag = pygame.transform.scale(flag, (WIDTH_FLAG, HEIGHT_FLAG))
+    margin = 50
+    # --- Main
+    flag_rect = pygame.Rect(margin,300+nb*80,SIZE_X - 2*margin, 60)
+    pygame.draw.rect(screen, l_gray, flag_rect, border_radius= 5)
+    # --- Left-border
+    flag_rect_lborder = pygame.Rect(margin,300+nb*80,10, 60)
+    flag_rect_lborder2 = pygame.Rect(margin+5,300+nb*80,10, 60)
+    pygame.draw.rect(screen, color, flag_rect_lborder, border_radius= 5)
+    pygame.draw.rect(screen, color, flag_rect_lborder2)
+    screen.blit(flag, [margin + 20, 310+nb*80])
+    # --- txt 
+    if LANG in {'jp', 'kr'}:
+        flag_font =  switch_font(45, False, False)
+    else:
+        flag_font =  switch_font(60, False, False)
+    flag_txt = flag_font.render(langues[txt].get(LANG), True, black)
+    screen.blit(flag_txt,(margin + WIDTH_FLAG + 20,310+nb*80))
+
+    if flag_rect.collidepoint((x,y)) and click:
+        LANG = txt
+        a_file = open("info.txt", "r")
+        list_of_lines = a_file.readlines()
+        list_of_lines[3] = str(txt)+"\n"
+
+        with open("info.txt", "w") as a_file:
+            a_file.writelines(list_of_lines)
+
+        langue(page)
+
+    
+def underHeaderButton(x,y,nb,txt,click):
+    if LANG =='gr':
+        under_font =  switch_font(45, False, False)
+    else:
+        under_font =  switch_font(60, False, False)
+    under_rect = pygame.Rect(nb * SIZE_X/3,150,SIZE_X/3,100 )
+    under_txt = under_font.render(langues[txt].get(LANG), True, black)
+    under_center = under_txt.get_rect(center=( (2*nb+1) * SIZE_X / 6,200))
+    if pygame.draw.rect(screen, screen_color,under_rect).collidepoint((x,y)) and click:
+        if txt=='languages':
+            langue(0)
+        elif txt == 'background-color':
+            background_color()
+        else:
+            sound_menu()
+    if pygame.draw.rect(screen, screen_color,under_rect).collidepoint((x,y)):
+        pygame.draw.rect(screen, darker_color,under_rect)
+    screen.blit(under_txt, under_center)
+
+def triangle_back(x,y,click):
+    arrow = [(100,30), (100, 120) , (33,75)]
+    arrow_rect = pygame.draw.polygon(screen,white,arrow)
+    if arrow_rect.collidepoint((x,y)) and click:
+        menu()
+
+
+def langue(page):
+    #Header
+    screen.fill(light_effet)
+    Header = pygame.Rect(0,0,SIZE_X, 150)
+    pygame.draw.rect(screen, dark_screen_color, Header)
+    underHeader = pygame.Rect(0,150,SIZE_X, 100)
+    pygame.draw.rect(screen, screen_color, underHeader)
+    #-----Title
+    font = switch_font(110, False, False)
+    #---LAnguage
+
+    title = font.render(langues["option"].get(LANG), True, white)
+    rect_title = title.get_rect(center=(SIZE_X/2,75))
+    screen.blit(title, rect_title)
+    click = False
+
+    # --- Switch Page
+
+    arrow = font.render(">", True, black)
+    rect_arrow = arrow.get_rect(center=(SIZE_X - 25, 490))
+    screen.blit(arrow, rect_arrow)
+
+
+    while 1:
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        triangle_back(mouse_x,mouse_y,click)
+        underHeaderButton(mouse_x,mouse_y,0,"languages",click)
+        underHeaderButton(mouse_x,mouse_y,1,"background-color",click)
+        underHeaderButton(mouse_x,mouse_y,2,"music",click)
+
+
+        if rect_arrow.collidepoint((mouse_x,mouse_y)) and click:
+            next_page = page + 1
+            if next_page > 1:
+                next_page = 0
+            langue(next_page)
+
+        if page == 0:
+            flag_icon('fr',(0, 85, 164),0,'fr',mouse_x,mouse_y,click,page)
+            flag_icon('us',(178, 34, 52),1,'en',mouse_x,mouse_y,click,page)
+            flag_icon('jp',(188, 0, 45),2,'jp',mouse_x,mouse_y,click,page)
+            flag_icon('kr',(0,0,0),3,'kr',mouse_x,mouse_y,click,page)
+            flag_icon('gr',(13, 94, 175),4,'gr',mouse_x,mouse_y,click,page)
+        else:
+            flag_icon('sw',(0, 106, 168),0,'sw',mouse_x,mouse_y,click,page)
+        click = False
+        for event in pygame.event.get():
+            exit_sys(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                click = True
+        pygame.display.flip()
+
+
+def slider(x,y,nb,color,realcolor):
+    global var_red, var_green, var_blue
+    change_volume_frame = pygame.Rect(95, SIZE_Y/2 -55+ nb * SIZE_Y/5, SIZE_X - 190, 110 )
+    pygame.draw.rect(screen, black, change_volume_frame)
+    change_volume_background = pygame.Rect(100, SIZE_Y/2 -50 + nb * SIZE_Y/5 , SIZE_X - 200, 100 )
+    pygame.draw.rect(screen, gray, change_volume_background)
+    change_volume_basic = pygame.Rect(100, SIZE_Y/2 -50 + nb * SIZE_Y/5, (SIZE_X-100)*int(realcolor)/255-100, 100 )
+    if color == 'r':
+        pygame.draw.rect(screen, (int(realcolor),0,0), change_volume_basic)
+        varf = var_red
+    elif color == 'g':
+        pygame.draw.rect(screen, (0,int(realcolor),0), change_volume_basic)
+        varf = var_green
+    else:
+        pygame.draw.rect(screen, (0,0,int(realcolor)), change_volume_basic)
+        varf = var_blue
+    if change_volume_background.collidepoint((x,y)) and varf:
+        degre = _extracted_from_slider_18(x, nb, color, change_volume_background)
+    if not change_volume_background.collidepoint((x,y)):
+        if color == 'r':
+            var_red = False
+        elif color == 'g':
+            var_green = False
+        else:
+            var_blue = False
+    try:
+        if degre is None:
+            degre = realcolor
+    except UnboundLocalError:
+        degre = realcolor
+    return degre
+
+def _extracted_from_slider_18(x, nb, color, change_volume_background):
+    result = int(round((((x -100 )/( SIZE_X -100)) * 100) * (10/8.97), 0))*2.55
+    result = min(result, 255)
+    result = max(result, 0)
+    change_volume = pygame.Rect(100, SIZE_Y/2 -50 + nb * SIZE_Y/5, x-100, 100 )
+    a_file = open("info.txt", "r")
+    list_of_lines = a_file.readlines()
+    if color == 'r':
+        color2 = result, 0, 0
+        list_of_lines[0] = str(int(result)) + "\n"
+
+    elif color == 'g':
+        color2 = 0, result, 0
+        list_of_lines[1] = str(int(result)) + "\n"
+    else:
+        color2 = 0, 0, result
+        list_of_lines[2] = str(int(result)) + "\n"
+
+    with open("info.txt", "w") as a_file:
+        a_file.writelines(list_of_lines)
+    pygame.draw.rect(screen, gray, change_volume_background)
+    pygame.draw.rect(screen, color2, change_volume)
+    return result
+
+
+def background_color():
+    global var_red, var_green, var_blue
+    global r, g, b , screen_color, light_effet, dark_screen_color, darker_color
+    Header = pygame.Rect(0,0,SIZE_X, 150)
+    underHeader = pygame.Rect(0,150,SIZE_X, 100)
+    #-----Title
+    font = switch_font(110, False, False)
+    #---LAnguage
+
+    title = font.render(langues["option"].get(LANG), True, white)
+    rect_title = title.get_rect(center=(SIZE_X/2,75))
+    click = False
+    while 1:
+        screen.fill(light_effet)
+        pygame.draw.rect(screen, dark_screen_color, Header)
+        pygame.draw.rect(screen, screen_color, underHeader)
+        screen.blit(title, rect_title)
+        mouse_x, mouse_y = pygame.mouse.get_pos()#54654865424654868
+        r = slider(mouse_x,mouse_y,0,'r',r)
+        g = slider(mouse_x,mouse_y,1,'g',g)
+        b = slider(mouse_x,mouse_y,2,'b',b)
+
+        triangle_back(mouse_x,mouse_y,click)
+        underHeaderButton(mouse_x,mouse_y,0,"languages",click)
+        underHeaderButton(mouse_x,mouse_y,1,"background-color",click)
+        underHeaderButton(mouse_x,mouse_y,2,"music",click)
+
+
+        # ---- CHanging COLORS
+
+        if int(r) > 235 and int(g) > 235 and int(b) > 235:
+            screen_color = (235,235,235)
+        elif int(r) < 50 and int(g) < 50 and int(b) < 50:
+            screen_color = (50, 50, 50)
+        else:
+            screen_color = ( int(r) , int(g) , int(b)) #255 , 224 , 0
+
+        dark_screen_color = (int(round(float(r)/1.13,0)) , int(round(float(g)/1.13,0)) , int(round(float(b)/1.13,0))) #225, 200, 0
+
+        light_effet = (light_color(r), light_color(g), light_color(b)) #252, 244, 164
+        darker_color = ( max( int(r) - 50 , 0),max( int(g) - 50 , 0),max( int(b) - 50 , 0))
+
+        # -----------
+
+        if click:
+            var_red = not var_red
+            var_green = not var_green
+            var_blue = not var_blue
+            
+        click = False
+        for event in pygame.event.get():
+            exit_sys(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                click = True
+        pygame.display.flip()
+
+def sound_menu():
+
+    global volume
+
+    Header = pygame.Rect(0,0,SIZE_X, 150)
+    underHeader = pygame.Rect(0,150,SIZE_X, 100)
+    #-----Title
+    font = switch_font(110, False, False)
+    #---LAnguage
+
+    title = font.render(langues["option"].get(LANG), True, white)
+    rect_title = title.get_rect(center=(SIZE_X/2,75))
+
+    screen.fill(light_effet)
+    pygame.draw.rect(screen, dark_screen_color, Header)
+    pygame.draw.rect(screen, screen_color, underHeader)
+    screen.blit(title, rect_title)
+
+    back_font = switch_font(50, False, True)
+    vol_text = back_font.render( str(volume) + "%", True, black)
+    vol_rect = vol_text.get_rect(center=(SIZE_X/2,SIZE_Y/1.75 +100))
+    screen.blit(vol_text, vol_rect)
+
+    sound_font = switch_font(70, False, False)
+    sound_text = sound_font.render(langues["vol_music"].get(LANG), True, black)
+    sound_rect = sound_text.get_rect(center=(SIZE_X/2, SIZE_Y/1.75 -100))
+
+    screen.blit(sound_text, sound_rect)
+
+    change_volume_background = pygame.Rect(100, SIZE_Y/1.75 -50, SIZE_X - 200, 100 )
+    change_volume_frame = pygame.Rect(95, SIZE_Y/1.75 -55, SIZE_X - 190, 110 )
+
+    pygame.draw.rect(screen, black, change_volume_frame)
+    pygame.draw.rect(screen, screen_color, change_volume_background)
+
+
+    click = False
+    click_slider = False
+    while 1:
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        triangle_back(mouse_x,mouse_y,click)
+
+        if change_volume_background.collidepoint((mouse_x, mouse_y)) and click_slider:
+            volume = round((((mouse_x -100 )/( SIZE_X -100)) * 100) * (10/8.97), 1)
+            vol_text = back_font.render( str(volume) + "%", True, black)
+            vol_rect = vol_text.get_rect(center=(SIZE_X/2,SIZE_Y/1.75 +100))
+            vol_rect2 = pygame.Rect(100,SIZE_Y/1.75 + 55,SIZE_X - 190, 110)
+            change_volume = pygame.Rect(100, SIZE_Y/1.75 -50, mouse_x-100, 100 )
+            pygame.draw.rect(screen, gray, change_volume_background)
+            pygame.draw.rect(screen, screen_color, change_volume)
+            pygame.draw.rect(screen, light_effet, vol_rect2)
+            screen.blit(vol_text, vol_rect)
+            music.set_volume(volume/100)
+            a_file = open("info.txt", "r")
+            list_of_lines = a_file.readlines()
+            list_of_lines[5] = str(int(volume)) + "\n"
+
+            with open("info.txt", "w") as a_file:
+                a_file.writelines(list_of_lines)
+
+        if not change_volume_background.collidepoint((mouse_x, mouse_y)):
+            click_slider = False
+
+        underHeaderButton(mouse_x,mouse_y,0,"languages",click)
+        underHeaderButton(mouse_x,mouse_y,1,"background-color",click)
+        underHeaderButton(mouse_x,mouse_y,2,"music",click)
 
         click = False
         for event in pygame.event.get():
@@ -137,21 +714,10 @@ def main():
                 running = False
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                click_slider = True
                 click = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP and K in {0, 1}:
-                    K+=1
-                elif event.key == pygame.K_DOWN and K in {2, 3}:
-                    K+=1
-                elif event.key == pygame.K_LEFT and K in {4, 6}:
-                    K+=1
-                elif event.key == pygame.K_RIGHT and K in {5, 7}:
-                    K+=1
-                else:
-                    K=0
-        pygame.display.update()
-        mainClock.tick_busy_loop(60)
-  
+        pygame.display.flip()
+
 
 def choosing_lenght():
     """ The Menu to change the lenght of the tray """
@@ -160,7 +726,7 @@ def choosing_lenght():
     title_font = switch_font(75, False, False)
 
     #TITLE
-    title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
+    title = title_font.render(langues["local"].get(LANG), True, (0 , 0 ,0))
     title_rect =title.get_rect(center=(SIZE_X/2, 50))
     screen.blit(title,title_rect)
 
@@ -223,7 +789,7 @@ def choosing_lenght():
         if change_lenght_background.collidepoint((mouse_x, mouse_y)) and click:
             lenght_plate = int(round((((mouse_x -100 )/( SIZE_X -100)) * 45) * (10/8.97)+5, 0))
             vol_text = back_font.render( str(lenght_plate) + "x" + str(lenght_plate), True, black)
-            vol_rect = back_text.get_rect(center=(SIZE_X/2,SIZE_Y/2 +100))
+            vol_rect = vol_text.get_rect(center=(SIZE_X/2,SIZE_Y/2 +100))
             change_volume = pygame.Rect(100, SIZE_Y/2 -50, mouse_x-100, 100 )
             pygame.draw.rect(screen, gray, change_lenght_background)
             pygame.draw.rect(screen, white, change_volume)
@@ -267,6 +833,7 @@ def _extracted_from_choosing_lenght_29(arg0, arg1, arg2):
     lenght_rect = lenght_text.get_rect(center=(SIZE_X/2, SIZE_Y/2 - arg2))
     screen.blit(lenght_text, lenght_rect)
 
+
 def game(x):
 
     """ The Game """
@@ -274,7 +841,7 @@ def game(x):
     POSITION_FOUND2 = False
     screen.fill(screen_color)
     title_font = switch_font(75, False, False)
-    title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
+    title = title_font.render(langues["local"].get(LANG), True, (0 , 0 ,0))
     title_rect =title.get_rect(center=(SIZE_X/2, 50))
     screen.blit(title,title_rect)
 
@@ -329,7 +896,7 @@ def game(x):
                 running = False
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONUP and once_variable and click_button.collidepoint(pygame.mouse.get_pos()):
-                choosing_lenght()
+                game_menu()
             elif event.type == pygame.MOUSEBUTTONUP and once_variable:
                 click = True
                 FOUND = False
@@ -574,9 +1141,9 @@ def game(x):
                                     solb(-lenght_plate +1)
                                     solb(-lenght_plate)
                                 elif VALUE_SOLUTION <= (lenght_plate-1) : #WHite Border-Top
-                                   solb(lenght_plate)
-                                   solb(lenght_plate-1)
-                                   solb(-1)
+                                    solb(lenght_plate)
+                                    solb(lenght_plate-1)
+                                    solb(-1)
                                 
                                 elif not POSITION_FOUND:
                                     if Hexa_color[VALUE_SOLUTION-lenght_plate]==black:
@@ -588,8 +1155,7 @@ def game(x):
                                     if Hexa_color[VALUE_SOLUTION+lenght_plate-1]==black:
                                         next_solution.append(VALUE_SOLUTION + lenght_plate-1)
                                     if Hexa_color[VALUE_SOLUTION+lenght_plate]==black:
-                                        next_solution.append(VALUE_SOLUTION + lenght_plate )
-                                    
+                                        next_solution.append(VALUE_SOLUTION + lenght_plate )                               
                                 passed.append(VALUE_SOLUTION)
 
         else:
@@ -634,370 +1200,5 @@ def game(x):
         screen.blit(winmessage,middle)
         pygame.display.flip()
         click = False
-    
 
-def option():
-
-    """ The Menu Option """
-
-    screen.fill(screen_color)
-    title_font = switch_font(75, False, False)
-    title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
-    title_rect =title.get_rect(center=(SIZE_X/2, 50))
-    screen.blit(title,title_rect)
-
-    running = True
-    click = False
-    # DARK SCREEN COLOR
-    pygame.draw.rect(screen, dark_screen_color, play_button, border_radius= 15)
-    pygame.draw.rect(screen, dark_screen_color, option_button, border_radius= 15)
-    pygame.draw.rect(screen, dark_screen_color, quit_button, border_radius= 15)
-    #SCREEN COLOR
-    pygame.draw.rect(screen, screen_color, play_button_2, border_radius= 15)
-    pygame.draw.rect(screen, screen_color, option_button_2, border_radius= 15)
-    pygame.draw.rect(screen, screen_color, quit_button_2, border_radius= 15)
-    #LIGHT EFFECT
-    pygame.draw.rect(screen, light_effet, play_button_4, border_radius= 15)
-    pygame.draw.rect(screen, light_effet, option_button_4, border_radius= 15)
-    pygame.draw.rect(screen, light_effet, quit_button_4, border_radius= 15)
-    # Black BORDER
-    pygame.draw.rect(screen, black, play_button, 5 ,border_radius= 15)
-    pygame.draw.rect(screen, black, option_button, 5, border_radius= 15)
-    pygame.draw.rect(screen, black, quit_button, 5, border_radius= 15)
-
-    #TEXT
-    font = switch_font(50, False, False)
-    play_text = font.render(langues["background-color"].get(LANG), True, (0 , 0 ,0))
-    option_text = font.render(langues["languages"].get(LANG), True, (0 , 0 ,0))
-    quit_text = font.render(langues["music"].get(LANG), True, (0 , 0 ,0))
-
-
-
-    play_rect = play_text.get_rect(center=(SIZE_X/2, SIZE_Y/2 - MARGIN_TOP))
-    option_rect = option_text.get_rect(center=(SIZE_X/2, SIZE_Y/2))
-    quit_rect = quit_text.get_rect(center=(SIZE_X/2, SIZE_Y/2 + MARGIN_TOP))
-
-
-    screen.blit(play_text, play_rect)
-    screen.blit(option_text, option_rect)
-    screen.blit(quit_text, quit_rect)
-
-
-    button_return = pygame.Rect(10, 10 , 200, 75)
-    click_button = pygame.draw.rect(screen, screen_color, button_return)
-
-
-    back_font = switch_font(50, False, True)
-    back_text = back_font.render(" << "+langues["back"].get(LANG), True, black)
-
-
-    back_center = back_text.get_rect(center=(105, 43))
-    
-
-    pygame.draw.rect(screen, black, button_return, 5)
-    screen.blit(back_text, back_center)
-
-    click = False
-    while running:
-        
-        mouse_x , mouse_y = pygame.mouse.get_pos()
-        if click_button.collidepoint((mouse_x, mouse_y)) and click:
-            main()
-        if play_button.collidepoint((mouse_x, mouse_y)) and click:
-            background_color()
-        if option_button.collidepoint((mouse_x, mouse_y)) and click:
-            language()
-        if quit_button.collidepoint((mouse_x, mouse_y)) and click:
-            music_menu()
-        click = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                click = True
-        pygame.display.flip()
-
-def switch_font(size, bold, italic):
-    if LANG in ['fr', 'en', 'gr']:
-        font = pygame.font.SysFont(global_font,size, bold, italic)
-    elif LANG == 'jp':
-        font = pygame.font.Font("Fonts/RocknRollOne-Regular.ttf", size-10)
-    elif LANG == 'kr':
-        font = pygame.font.Font("Fonts/DoHyeon-Regular.ttf", size)
-
-    return font
-
-def language():
-    
-    """ Allow the user to change the Langage"""
-
-    global global_font
-    global LANG
-    try:
-        LANG = LANG
-    except:
-        LANG = "en"
-    screen.fill(screen_color)
-    title_font = switch_font(75, False, False)
-
-
-    # --- Flag Images
-    fr_flag = pygame.image.load("Flags/fr.svg")
-    us_flag = pygame.image.load("Flags/us.png")
-    jp_flag = pygame.image.load("Flags/jp.svg")
-    kr_flag = pygame.image.load("Flags/kr.png")
-    gr_flag = pygame.image.load("Flags/gr.svg")
-    kr_flag.convert()
-    #---Rescale
-    HEIGHT_FLAG = 133
-    WIDTH_FLAG = 200
-    fr_flag = pygame.transform.scale(fr_flag, (WIDTH_FLAG, HEIGHT_FLAG))
-    us_flag = pygame.transform.scale(us_flag, (WIDTH_FLAG, HEIGHT_FLAG))
-    jp_flag = pygame.transform.scale(jp_flag, (WIDTH_FLAG, HEIGHT_FLAG))
-    kr_flag = pygame.transform.scale(kr_flag, (WIDTH_FLAG, HEIGHT_FLAG))
-    gr_flag = pygame.transform.scale(gr_flag, (WIDTH_FLAG, HEIGHT_FLAG))
-    kr_flag.convert()
-    #---Showing Images
-    screen.blit(fr_flag, [SIZE_X/2 - WIDTH_FLAG - 12, 100])
-    screen.blit(us_flag, [SIZE_X/2 + 12, 100])
-    screen.blit(jp_flag, [SIZE_X/2 - WIDTH_FLAG - 12, 100 + HEIGHT_FLAG + 25])
-    screen.blit(kr_flag, [SIZE_X/2 + 12, 100 + HEIGHT_FLAG + 25])
-    screen.blit(gr_flag, [SIZE_X/2 - WIDTH_FLAG/2, 100 + HEIGHT_FLAG*2 + 50])
-
-    fr_rect = pygame.Rect(SIZE_X/2 - WIDTH_FLAG - 12, 100, WIDTH_FLAG, HEIGHT_FLAG)
-    en_rect = pygame.Rect(SIZE_X/2 + 12, 100, WIDTH_FLAG, HEIGHT_FLAG)
-    jp_rect = pygame.Rect(SIZE_X/2 - WIDTH_FLAG - 12, 100 + HEIGHT_FLAG + 25, WIDTH_FLAG, HEIGHT_FLAG)
-    kr_rect = pygame.Rect(SIZE_X/2 + 12, 100 + HEIGHT_FLAG + 25, WIDTH_FLAG, HEIGHT_FLAG)
-    gr_rect = pygame.Rect(SIZE_X/2 - WIDTH_FLAG/2, 100 + HEIGHT_FLAG*2 + 50, WIDTH_FLAG, HEIGHT_FLAG)
-
-    running = True
-    click = False
-    while running:
-        #TITLE
-        title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
-        title_rect =title.get_rect(center=(SIZE_X/2, 50))
-        screen.blit(title,title_rect)
-
-
-        #Back Button
-        button_return = pygame.Rect(10, 10 , 200, 75)
-        click_button = pygame.draw.rect(screen, screen_color, button_return)
-        back_font = switch_font(50, False, True)
-        back_text = back_font.render(" << "+langues["back"].get(LANG), True, black)
-
-        back_center = back_text.get_rect(center=(105, 43))
-        
-        pygame.draw.rect(screen, black, button_return, 5)
-        screen.blit(back_text, back_center)
-
-        mouse_x , mouse_y = pygame.mouse.get_pos()
-        if click_button.collidepoint((mouse_x, mouse_y)) and click:
-            option()
-        if fr_rect.collidepoint((mouse_x, mouse_y)) and click:
-            LANG = "fr"
-            language()
-        if en_rect.collidepoint((mouse_x, mouse_y)) and click:
-            LANG = "en"
-            language()
-        if jp_rect.collidepoint((mouse_x, mouse_y)) and click:
-            LANG = "jp"
-            language()
-        if kr_rect.collidepoint((mouse_x, mouse_y)) and click:
-            LANG = "kr"
-            language()
-        if gr_rect.collidepoint((mouse_x, mouse_y)) and click:
-            LANG = "gr"
-            language()
-
-
-        click = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                click = True
-        pygame.display.flip()
-
-def music_menu():
-
-    """Allow the user to change the language"""
-
-    screen.fill(screen_color)
-    title_font = switch_font(75, False, False)
-
-    #TITLE
-    title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
-    title_rect =title.get_rect(center=(SIZE_X/2, 50))
-    screen.blit(title,title_rect)
-
-    #Back Button
-    button_return = pygame.Rect(10, 10 , 200, 75)
-    click_button = pygame.draw.rect(screen, screen_color, button_return)
-    back_font = switch_font(50, False, True)
-    back_text = back_font.render(" << "+langues["back"].get(LANG), True, black)
-
-    back_center = back_text.get_rect(center=(105, 43))
-    
-    pygame.draw.rect(screen, black, button_return, 5)
-    screen.blit(back_text, back_center)
-
-    volume = 100
-    vol_text = back_font.render( str(volume) + "%", True, black)
-    vol_rect = back_text.get_rect(center=(SIZE_X/2,SIZE_Y/2 +100))
-    screen.blit(vol_text, vol_rect)
-
-    sound_font = switch_font(70, False, False)
-    sound_text = sound_font.render(langues["vol_music"].get(LANG), True, black)
-    sound_rect =title.get_rect(center=(SIZE_X/2, SIZE_Y/2 -100))
-
-    screen.blit(sound_text, sound_rect)
-
-    change_volume_background = pygame.Rect(100, SIZE_Y/2 -50, SIZE_X - 200, 100 )
-    change_volume_frame = pygame.Rect(95, SIZE_Y/2 -55, SIZE_X - 190, 110 )
-
-    pygame.draw.rect(screen, black, change_volume_frame)
-    pygame.draw.rect(screen, light_effet, change_volume_background)
-
-    running = True
-    click = False
-
-    while running:
-        pygame.display.flip()
-
-        mouse_x , mouse_y = pygame.mouse.get_pos()
-
-
-        if click_button.collidepoint((mouse_x, mouse_y)) and click:
-            option()
-
-        if change_volume_background.collidepoint((mouse_x, mouse_y)) and click:
-            volume = round((((mouse_x -100 )/( SIZE_X -100)) * 100) * (10/8.97), 1)
-            vol_text = back_font.render( str(volume) + "%", True, black)
-            vol_rect = back_text.get_rect(center=(SIZE_X/2,SIZE_Y/2 +100))
-            change_volume = pygame.Rect(100, SIZE_Y/2 -50, mouse_x-100, 100 )
-            pygame.draw.rect(screen, gray, change_volume_background)
-            pygame.draw.rect(screen, light_effet, change_volume)
-            pygame.draw.rect(screen, screen_color, vol_rect)
-            screen.blit(vol_text, vol_rect)
-            music.set_volume(volume/100)
-
-        if not change_volume_background.collidepoint((mouse_x, mouse_y)):
-            click = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                click = True
-        pygame.display.flip()
-        
-def background_color():
-
-    """ Allow the user to change the background color"""
-
-    #-------------------------------
-    #
-    #          COLORS
-    #
-    #--------------------------------
-
-    global screen_color
-    global dark_screen_color
-    global light_effet
-
-    #----------------------------
-
-    blue = (0, 215, 255)
-    d_blue = (0, 185, 225)
-    l_blue = ( 165, 245, 255)
-
-    green = (0, 255, 0)
-    d_green = (0, 225, 0)
-    l_green = (165, 255, 165)
-
-    red = ( 255, 0, 0 )
-    d_red = ( 225, 0, 0 )
-    l_red = ( 255, 165, 165 )
-
-
-    #-------------------------------
-    screen.fill(screen_color)
-    title_font = switch_font(75, False, False)
-
-    #TITLE
-    title = title_font.render(langues["hex_game"].get(LANG), True, (0 , 0 ,0))
-    title_rect =title.get_rect(center=(SIZE_X/2, 50))
-    screen.blit(title,title_rect)
-
-    #Back Button
-    button_return = pygame.Rect(10, 10 , 200, 75)
-    click_button = pygame.draw.rect(screen, screen_color, button_return)
-    back_font = switch_font(50, False, True)
-    back_text = back_font.render(" << "+langues["back"].get(LANG), True, black)
-
-    back_center = back_text.get_rect(center=(105, 43))
-    
-    pygame.draw.rect(screen, black, button_return, 5)
-    screen.blit(back_text, back_center)
-
-
-    running = True
-    click = False
-    lenght_square = 200
-    def button(color, x, y):
-        button_color = pygame.Rect(x, y, lenght_square, lenght_square)
-        button_color_frame = pygame.Rect(x-5, y-5 , lenght_square + 10, lenght_square + 10)
-        return_rect = pygame.draw.rect(screen, black, button_color_frame)
-        pygame.draw.rect(screen, color, button_color)
-        return return_rect
-
-
-    while running:
-        pygame.display.flip()
-
-        mouse_x , mouse_y = pygame.mouse.get_pos()
-
-        blue_button = button(blue, SIZE_X/2 - 210, 100)
-        green_button = button(green, SIZE_X/2 + 5, 100)
-        main_button = button(( 255 , 224 , 0), SIZE_X/2 - 210, 315)
-        red_button = button(red, SIZE_X/2 + 5, 315)
-
-        if click_button.collidepoint((mouse_x, mouse_y)) and click:
-            option()
-        if blue_button.collidepoint((mouse_x, mouse_y)) and click:
-            screen_color = blue
-            dark_screen_color = d_blue
-            light_effet = l_blue
-        if green_button.collidepoint((mouse_x, mouse_y)) and click:
-            screen_color = green
-            dark_screen_color = d_green
-            light_effet = l_green
-        if main_button.collidepoint((mouse_x, mouse_y)) and click:
-            screen_color = ( 255 , 224 , 0)
-            dark_screen_color = (225, 200, 0)
-            light_effet = (252, 244, 164)
-        if red_button.collidepoint((mouse_x, mouse_y)) and click:
-            screen_color = red
-            dark_screen_color = d_red
-            light_effet = l_red
-        if click:
-            screen.fill(screen_color)
-            screen.blit(title,title_rect)
-            pygame.draw.rect(screen, black, button_return, 5)
-            screen.blit(back_text, back_center)
-
-
-
-
-        click = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                click = True
-        pygame.display.flip()
-
-main()
+menu()
