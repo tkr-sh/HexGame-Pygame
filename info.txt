@@ -1,0 +1,6 @@
+255
+225
+0
+en
+<pygame.font.Font object at 0x7ffa91e06b90>
+100
