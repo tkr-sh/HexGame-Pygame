@@ -6,6 +6,9 @@
 - [The algorithm for the Win](#the-algorithm-for-the-win)
 - [Other fonctionnalities](#other-fonctionnalities)
 
+## New
+In almost 1 year of Programmation, I learned a lot. I will soonly update my code and create an IA for Hex.
+
 ## Whats is Hex ?
 ### Historical point of view
 -----
